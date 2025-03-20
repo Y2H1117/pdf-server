@@ -1,0 +1,42 @@
+!DOCTYPE html
+html lang=en
+head
+  meta charset=UTF-8
+  meta name=viewport content=width=device-width, initial-scale=1.0
+  title疫苗接種健康問卷及同意書title
+head
+body
+  h1接種季節性流感肺炎鏈球菌疫苗健康問卷及同意書h1
+  form id=vaccineForm
+    label中文姓名 (Chinese Name) input type=text name=chineseName requiredlabelbr
+    label英文姓 (Surname) input type=text name=surname requiredlabelbr
+    label英文名 (Given Name) input type=text name=givenName requiredlabelbr
+    label性別 (Gender) input type=text name=gender requiredlabelbr
+    label電話 (Contact No) input type=text name=contact requiredlabelbr
+    label年齡 (Age) input type=number name=age requiredlabelbr
+    label身分證號碼 (ID No) input type=text name=idNo requiredlabelbr
+    label出生日期 (DOB) input type=date name=dob requiredlabelbr
+    !-- 添加更多表單字段 --
+    button type=submit提交button
+  form
+  script
+    document.getElementById('vaccineForm').addEventListener('submit', async (event) = {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      const response = await fetch('submit', {
+        method 'POST',
+        headers { 'Content-Type' 'applicationjson' },
+        body JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert('提交成功！PDF 已發送到電郵。');
+      } else {
+        alert('提交失敗，請稍後再試。');
+      }
+    });
+  script
+body
+html
