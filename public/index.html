@@ -1,42 +1,118 @@
-!DOCTYPE html
-html lang=en
-head
-  meta charset=UTF-8
-  meta name=viewport content=width=device-width, initial-scale=1.0
-  title疫苗接種健康問卷及同意書title
-head
-body
-  h1接種季節性流感肺炎鏈球菌疫苗健康問卷及同意書h1
-  form id=vaccineForm
-    label中文姓名 (Chinese Name) input type=text name=chineseName requiredlabelbr
-    label英文姓 (Surname) input type=text name=surname requiredlabelbr
-    label英文名 (Given Name) input type=text name=givenName requiredlabelbr
-    label性別 (Gender) input type=text name=gender requiredlabelbr
-    label電話 (Contact No) input type=text name=contact requiredlabelbr
-    label年齡 (Age) input type=number name=age requiredlabelbr
-    label身分證號碼 (ID No) input type=text name=idNo requiredlabelbr
-    label出生日期 (DOB) input type=date name=dob requiredlabelbr
-    !-- 添加更多表單字段 --
-    button type=submit提交button
-  form
-  script
-    document.getElementById('vaccineForm').addEventListener('submit', async (event) = {
-      event.preventDefault();
-      const formData = new FormData(event.target);
-      const data = Object.fromEntries(formData.entries());
-      
-      const response = await fetch('submit', {
-        method 'POST',
-        headers { 'Content-Type' 'applicationjson' },
-        body JSON.stringify(data),
-      });
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 表單填寫</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>填寫表單</h1>
+    <form id="data-form">
+        <label for="chineseName">中文姓名 (Chinese Name):</label>
+        <input type="text" id="chineseName" name="chineseName" required>
 
-      if (response.ok) {
-        alert('提交成功！PDF 已發送到電郵。');
-      } else {
-        alert('提交失敗，請稍後再試。');
-      }
-    });
-  script
-body
-html
+        <label for="surname">英文姓氏 (Surname):</label>
+        <input type="text" id="surname" name="surname" required>
+
+        <label for="givenName">英文名字 (Given Name):</label>
+        <input type="text" id="givenName" name="givenName" required>
+
+        <label for="gender">性別 (Gender):</label>
+        <input type="text" id="gender" name="gender" required>
+
+        <label for="contact">聯絡電話 (Contact):</label>
+        <input type="text" id="contact" name="contact" required>
+
+        <label for="age">年齡 (Age):</label>
+        <input type="number" id="age" name="age" required>
+
+        <label for="idNumber">身份證號碼 (ID Number):</label>
+        <input type="text" id="idNumber" name="idNumber" required>
+
+        <label for="dob">出生日期 (DOB):</label>
+        <input type="date" id="dob" name="dob" required>
+
+        <button type="submit">提交</button>
+    </form>
+    <script>
+        const form = document.getElementById('data-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                chineseName: form.chineseName.value,
+                surname: form.surname.value,
+                givenName: form.givenName.value,
+                gender: form.gender.value,
+                contact: form.contact.value,
+                age: form.age.value,
+                idNumber: form.idNumber.value,
+                dob: form.dob.value,
+            };
+
+            try {
+                const response = await fetch('/submit-form', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                if (response.ok) {
+                    alert('表單已成功提交並發送到郵箱！');
+                    form.reset();
+                } else {
+                    alert('表單提交失敗！');
+                }
+            } catch (error) {
+                console.error('提交表單時發生錯誤：', error);
+                alert('提交表單時發生錯誤，請稍後再試！');
+            }
+        });
+    </script>
+</body>
+</html>
