@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,112 +7,83 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.5;
-            margin: 0;
-            padding: 2rem;
-            background-color: #f8f9fa;
-        }
-        h1 {
-            text-align: center;
-            color: #343a40;
         }
         form {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
         }
         label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
+            margin-bottom: 5px;
         }
-        input, select, button {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 1rem;
+        input {
+            margin-bottom: 10px;
+            width: 300px;
+            padding: 5px;
         }
         button {
-            background-color: #28a745;
+            margin-top: 10px;
+            padding: 5px 15px;
+            background-color: #007BFF;
             color: white;
             border: none;
             cursor: pointer;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #0056b3;
+        }
+        #submission-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>填寫表單</h1>
-    <form id="data-form">
-        <label for="chineseName">中文姓名 (Chinese Name):</label>
+    <div id="submission-counter">提交次數: 加載中...</div>
+
+    <form id="form">
+        <label for="chineseName">中文姓名:</label>
         <input type="text" id="chineseName" name="chineseName" required>
-
-        <label for="surname">英文姓氏 (Surname):</label>
+        <label for="surname">英文姓氏:</label>
         <input type="text" id="surname" name="surname" required>
-
-        <label for="givenName">英文名字 (Given Name):</label>
+        <label for="givenName">英文名字:</label>
         <input type="text" id="givenName" name="givenName" required>
-
-        <label for="gender">性別 (Gender):</label>
+        <label for="gender">性別:</label>
         <input type="text" id="gender" name="gender" required>
-
-        <label for="contact">聯絡電話 (Contact):</label>
+        <label for="contact">聯絡電話:</label>
         <input type="text" id="contact" name="contact" required>
-
-        <label for="age">年齡 (Age):</label>
+        <label for="age">年齡:</label>
         <input type="number" id="age" name="age" required>
-
-        <label for="idNumber">身份證號碼 (ID Number):</label>
+        <label for="idNumber">身份證號碼:</label>
         <input type="text" id="idNumber" name="idNumber" required>
-
-        <label for="dob">出生日期 (DOB):</label>
+        <label for="dob">出生日期:</label>
         <input type="date" id="dob" name="dob" required>
-
         <button type="submit">提交</button>
     </form>
+
     <script>
-        const form = document.getElementById('data-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = {
-                chineseName: form.chineseName.value,
-                surname: form.surname.value,
-                givenName: form.givenName.value,
-                gender: form.gender.value,
-                contact: form.contact.value,
-                age: form.age.value,
-                idNumber: form.idNumber.value,
-                dob: form.dob.value,
-            };
-
+        // 更新提交次數
+        async function updateSubmissionCount() {
             try {
-                const response = await fetch('/submit-form', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
-
-                if (response.ok) {
-                    alert('表單已成功提交並發送到郵箱！');
-                    form.reset();
-                } else {
-                    alert('表單提交失敗！');
+                const response = await fetch('/submission-count');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                const data = await response.json();
+                document.getElementById('submission-counter').innerText = `提交次數: ${data.count}`;
             } catch (error) {
-                console.error('提交表單時發生錯誤：', error);
-                alert('提交表單時發生錯誤，請稍後再試！');
+                console.error('無法獲取提交次數：', error);
+                document.getElementById('submission-counter').innerText = '提交次數: 加載失敗';
             }
-        });
+        }
+
+        // 頁面加載時更新提交次數
+        updateSubmissionCount();
+
+        // 每隔 5 秒更新一次提交次數
+        setInterval(updateSubmissionCount, 5000);
     </script>
 </body>
 </html>

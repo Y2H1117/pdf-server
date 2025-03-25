@@ -11,7 +11,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000; // 保留唯一的 PORT 定義
+const PORT = process.env.PORT || 3000;
+
+// 初始化提交次數
+let submissionCount = 0;
 
 // 設置靜態資源目錄
 app.use(express.static('public'));
@@ -29,17 +32,17 @@ app.post('/submit-form', async (req, res) => {
         const pdfDoc = await PDFDocument.load(templateBytes);
         pdfDoc.registerFontkit(fontkit);
 
-        // 嵌入支持中文的字體
-        const chineseFontBytes = fs.readFileSync('./fonts/NotoSansTC-Regular.ttf'); // 中文字體
+        // 嵌入支持中文字體
+        const chineseFontBytes = fs.readFileSync('./fonts/NotoSansTC-Regular.ttf');
         const chineseFont = await pdfDoc.embedFont(chineseFontBytes);
 
-        // 嵌入支持英文字母和數字的字體
-        const englishFontBytes = fs.readFileSync('./fonts/Roboto-Regular.ttf'); // 英文字體
+        // 嵌入支持英文字體
+        const englishFontBytes = fs.readFileSync('./fonts/Roboto-Regular.ttf');
         const englishFont = await pdfDoc.embedFont(englishFontBytes);
 
         const pages = pdfDoc.getPages();
         const firstPage = pages[0];
-        const fontSize = 9; // 字體大小
+        const fontSize = 9;
 
         // 填寫 PDF 表單
         firstPage.drawText(formData.chineseName, { x: 135, y: 700, size: fontSize, font: chineseFont });
@@ -60,8 +63,8 @@ app.post('/submit-form', async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: process.env.EMAIL, // 從 .env 文件讀取 Gmail 地址
-                pass: process.env.EMAIL_PASSWORD, // 從 .env 文件讀取 Gmail 應用程式密碼
+                user: process.env.EMAIL,
+                pass: process.env.EMAIL_PASSWORD,
             },
         });
 
@@ -73,7 +76,7 @@ app.post('/submit-form', async (req, res) => {
             attachments: [
                 {
                     filename: 'filled-form.pdf',
-                    path: pdfPath, // 附件的路徑
+                    path: pdfPath,
                 },
             ],
         };
@@ -83,6 +86,9 @@ app.post('/submit-form', async (req, res) => {
         // 刪除本地 PDF 文件
         fs.unlinkSync(pdfPath);
 
+        // 增加提交次數
+        submissionCount += 1;
+
         // 返回成功響應
         res.status(200).send({ message: '表單已成功提交並發送到郵箱！' });
     } catch (error) {
@@ -91,34 +97,20 @@ app.post('/submit-form', async (req, res) => {
     }
 });
 
-// 測試郵件 API
-app.get('/test-email', async (req, res) => {
-    try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL,
-                pass: process.env.EMAIL_PASSWORD,
-            },
-        });
-
-        const mailOptions = {
-            from: process.env.EMAIL,
-            to: process.env.EMAIL, // 發送給自己
-            subject: '測試郵件',
-            text: '這是一封測試郵件，確認服務器郵件發送功能是否正常。',
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        res.status(200).send('測試郵件已成功發送！');
-    } catch (error) {
-        console.error('郵件發送失敗：', error);
-        res.status(500).send('郵件發送失敗！');
-    }
+// 新增 API：返回提交次數
+app.get('/submission-count', (req, res) => {
+    res.status(200).send({ count: submissionCount });
 });
 
 // 啟動服務器
 app.listen(PORT, () => {
-    console.log(`服務器正在運行：http://localhost:${PORT}`);
+    console.log(`服務器已啟動：http://localhost:${PORT}`);
 });
+
+app.get('/submission-count', (req, res) => {
+    res.status(200).json({ count: submissionCount }); // 返回 JSON 格式的提交次數
+});
+
+let submissionCount = 0; // 初始化提交次數
+
+submissionCount += 1;
