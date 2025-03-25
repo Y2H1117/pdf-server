@@ -23,76 +23,79 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 
 // 處理表單提交 API
-app.post('/submit-form', async (req, res) => {
-    try {
-        const formData = req.body;
+app.post('/submit-form', (req, res) => {
+    const formData = req.body;
 
-        // 加載模板 PDF
-        const templateBytes = fs.readFileSync('./template.pdf');
-        const pdfDoc = await PDFDocument.load(templateBytes);
-        pdfDoc.registerFontkit(fontkit);
+    // 立即返回成功響應
+    res.status(200).send({ message: '表單提交成功！' });
 
-        // 嵌入字體（中文支持）
-        const chineseFontBytes = fs.readFileSync('./fonts/NotoSansTC-Regular.ttf');
-        const chineseFont = await pdfDoc.embedFont(chineseFontBytes);
+    // 在後台處理 PDF 生成和郵件發送
+    (async () => {
+        try {
+            const templateBytes = fs.readFileSync('./template.pdf');
+            const pdfDoc = await PDFDocument.load(templateBytes);
+            pdfDoc.registerFontkit(fontkit);
 
-        const englishFontBytes = fs.readFileSync('./fonts/Roboto-Regular.ttf');
-        const englishFont = await pdfDoc.embedFont(englishFontBytes);
+            const chineseFontBytes = fs.readFileSync('./fonts/NotoSansTC-Regular.ttf');
+            const chineseFont = await pdfDoc.embedFont(chineseFontBytes);
 
-        const pages = pdfDoc.getPages();
-        const firstPage = pages[0];
-        const fontSize = 12;
+            const englishFontBytes = fs.readFileSync('./fonts/Roboto-Regular.ttf');
+            const englishFont = await pdfDoc.embedFont(englishFontBytes);
 
-        // 填寫 PDF 表單
-        firstPage.drawText(formData.chineseName, { x: 135, y: 700, size: fontSize, font: chineseFont });
-        firstPage.drawText(formData.surname, { x: 330, y: 700, size: fontSize, font: englishFont });
-        firstPage.drawText(formData.givenName, { x: 455, y: 700, size: fontSize, font: englishFont });
-        firstPage.drawText(formData.gender, { x: 90, y: 675, size: fontSize, font: chineseFont });
-        firstPage.drawText(formData.contact, { x: 250, y: 675, size: fontSize, font: englishFont });
-        firstPage.drawText(formData.age.toString(), { x: 380, y: 675, size: fontSize, font: englishFont });
-        firstPage.drawText(formData.idNumber.replace(/\s+/g, ''), { x: 100, y: 653, size: fontSize, font: englishFont });
-        firstPage.drawText(formData.dob, { x: 240, y: 653, size: fontSize, font: englishFont });
+            const pages = pdfDoc.getPages();
+            const firstPage = pages[0];
+            const fontSize = 12;
 
-        // 保存 PDF
-        const pdfBytes = await pdfDoc.save();
-        const pdfPath = path.join(process.cwd(), 'filled-form.pdf');
-        fs.writeFileSync(pdfPath, pdfBytes);
+            // 填寫 PDF 表單
+            firstPage.drawText(formData.chineseName, { x: 135, y: 700, size: fontSize, font: chineseFont });
+            firstPage.drawText(formData.surname, { x: 330, y: 700, size: fontSize, font: englishFont });
+            firstPage.drawText(formData.givenName, { x: 455, y: 700, size: fontSize, font: englishFont });
+            firstPage.drawText(formData.gender, { x: 90, y: 675, size: fontSize, font: chineseFont });
+            firstPage.drawText(formData.contact, { x: 250, y: 675, size: fontSize, font: englishFont });
+            firstPage.drawText(formData.age.toString(), { x: 380, y: 675, size: fontSize, font: englishFont });
+            firstPage.drawText(formData.idNumber.replace(/\s+/g, ''), { x: 100, y: 653, size: fontSize, font: englishFont });
+            firstPage.drawText(formData.dob, { x: 240, y: 653, size: fontSize, font: englishFont });
 
-        // 發送郵件
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL,
-                pass: process.env.EMAIL_PASSWORD,
-            },
-        });
+            // 保存 PDF
+            const pdfBytes = await pdfDoc.save();
+            const pdfPath = path.join(process.cwd(), 'filled-form.pdf');
+            fs.writeFileSync(pdfPath, pdfBytes);
 
-        const mailOptions = {
-            from: process.env.EMAIL,
-            to: process.env.EMAIL,
-            subject: '表單提交 PDF',
-            text: '以下為提交的表單 PDF。',
-            attachments: [
-                {
-                    filename: 'filled-form.pdf',
-                    path: pdfPath,
+            // 發送郵件
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL,
+                    pass: process.env.EMAIL_PASSWORD,
                 },
-            ],
-        };
+            });
 
-        await transporter.sendMail(mailOptions);
+            const mailOptions = {
+                from: process.env.EMAIL,
+                to: process.env.EMAIL,
+                subject: '表單提交 PDF',
+                text: '以下為提交的表單 PDF。',
+                attachments: [
+                    {
+                        filename: 'filled-form.pdf',
+                        path: pdfPath,
+                    },
+                ],
+            };
 
-        // 刪除 PDF 文件
-        fs.unlinkSync(pdfPath);
+            await transporter.sendMail(mailOptions);
 
-        // 增加提交次數
-        submissionCount += 1;
+            // 刪除 PDF 文件
+            fs.unlinkSync(pdfPath);
 
-        res.status(200).send({ message: '表單提交成功，PDF 已發送！' });
-    } catch (error) {
-        console.error('表單提交失敗：', error);
-        res.status(500).send({ message: '表單提交失敗！' });
-    }
+            console.log('表單處理完成並郵件發送成功！');
+        } catch (error) {
+            console.error('表單處理或郵件發送失敗：', error);
+        }
+    })();
+
+    // 增加提交次數
+    submissionCount += 1;
 });
 
 // API：返回提交次數
