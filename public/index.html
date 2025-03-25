@@ -84,6 +84,28 @@
 
         // 每隔 5 秒更新一次提交次數
         setInterval(updateSubmissionCount, 5000);
+
+        // 表單提交邏輯
+        document.getElementById('form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            try {
+                const response = await fetch('/submit-form', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
+                alert(result.message);
+                updateSubmissionCount(); // 提交成功後更新提交次數
+            } catch (error) {
+                console.error('表單提交失敗：', error);
+                alert('提交失敗，請稍後再試！');
+            }
+        });
     </script>
 </body>
 </html>
